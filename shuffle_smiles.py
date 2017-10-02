@@ -1,6 +1,7 @@
 from random import randint
 
 def fisherYatesShuffle(smiles_list):
+    """Unbiased and efficienty shuffling implementation, just here in case the smiles list didn't play nicely with the python built in function (but it appears to)."""
     n = len(smiles_list)
     while (n > 1):
         n = n - 1
