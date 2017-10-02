@@ -6,7 +6,6 @@ from keras.layers.core import Dropout
 from keras.optimizers import Adam
 import numpy as np
 
-
 RUN_KEY = 'Model_Saves/Test'
 SHUFFLE = True
 SEQ_LENGTH = 64
@@ -14,8 +13,8 @@ BATCH_SIZE = 128
 
 # Locate and read smiles strings from file
 SMILES_PATH = 'smiles.txt'
-# Will converge well before this point, so only read first 600000
-smiles_list = list(set(open(SMILES_PATH).readlines()[0:600000]))
+
+smiles_list = list(set(open(SMILES_PATH).readlines()))
 
 # Prepare one-hot char representation
 smiles_text = [item for sublist in smiles_list for item in sublist]
@@ -50,7 +49,7 @@ optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0, c
 model.compile(loss='categorical_crossentropy',
               optimizer=optimizer)
 
-
+#a = input('1')
 def one_hot_vector_gen(smiles_text, char_indices, seq_length=25):
     """Take the text, predetermined char_indices and sequence length and return a list or vectors of the appropriate one-hot representation"""
     inputs = []
@@ -64,19 +63,33 @@ def one_hot_vector_gen(smiles_text, char_indices, seq_length=25):
             yield (np.reshape(np.array(inputs, dtype=np.float32), (BATCH_SIZE, SEQ_LENGTH, alphabet_size)),np.array(targets, dtype=np.int8))
             inputs, targets = [], []
 
-one_hot_generator =  one_hot_vector_gen(smiles_text, char_indices, SEQ_LENGTH)
+#a = input('2')
 
 # Generate validation generator from last third of data
 validation_generator = one_hot_vector_gen(smiles_text[int(-1 * len(smiles_text)/3.0):-1], char_indices, SEQ_LENGTH)
+
+#a = input('3')
 validation_data = [next(validation_generator) for i in range(5120)]
 
-for iteration in range(6):
+#a = input('4')
+one_hot_generator =  one_hot_vector_gen(smiles_text, char_indices, SEQ_LENGTH)
+
+#a = input('5')
+
+for iteration in range(60):
 
     checkpoint_callback = ModelCheckpoint('./{}/'.format(RUN_KEY) + '{}.hdf5'.format(str(iteration)), monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
 
-    model.fit_generator(one_hot_generator, samples_per_epoch=BATCH_SIZE,
-              nb_epoch=1000,
-              callbacks=[tb_callback, checkpoint_callback],
-              verbose=1,
-              initial_epoch=iteration,
-              validation_data = validation_data)
+    if iteration % 5 and iteration >= 40:
+        model.fit_generator(one_hot_generator, samples_per_epoch=BATCH_SIZE,
+                            nb_epoch=1000,
+                            callbacks=[checkpoint_callback],
+                            verbose=1,
+                            initial_epoch=iteration,
+                            validation_data = validation_data)
+    else:
+        model.fit_generator(one_hot_generator, samples_per_epoch=BATCH_SIZE,
+                            nb_epoch=1000,
+                            verbose=0,
+                            initial_epoch=iteration)
+#                            validation_data = validation_data)
